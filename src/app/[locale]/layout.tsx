@@ -64,6 +64,9 @@ export default async function LocaleLayout({
     >
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <noscript>
+          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>
