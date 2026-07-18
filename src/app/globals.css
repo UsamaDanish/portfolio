@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Design tokens — site palette (themeable). Values from the design hand-off.
+   Light tokens live on :root too, so there is never a flash of unstyled
+   content before the pre-paint theme script sets [data-theme].
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  --bg-base: #FBFBF9;
+  --bg-surface: #FFFFFF;
+  --bg-surface-2: #F4F4F1;
+  --text-primary: #16171A;
+  --text-muted: #6B7078;
+  --text-faint: #A0A4AB;
+  --hairline: rgba(0, 0, 0, 0.08);
+  --strong: rgba(0, 0, 0, 0.14);
+  --accent: #0B5CFF;
+  --accent-soft: rgba(11, 92, 255, 0.08);
+  --nav-bg: rgba(251, 251, 249, 0.72);
+}
+
+[data-theme="dark"] {
+  --bg-base: #0A0B0D;
+  --bg-surface: #141619;
+  --bg-surface-2: #1C1F24;
+  --text-primary: #E8E9EB;
+  --text-muted: #7A7F87;
+  --text-faint: #4A4F57;
+  --hairline: rgba(255, 255, 255, 0.06);
+  --strong: rgba(255, 255, 255, 0.12);
+  --accent: #4D8DFF;
+  --accent-soft: rgba(77, 141, 255, 0.12);
+  --nav-bg: rgba(10, 11, 13, 0.72);
+}
+
+/* Latency Lab — fixed palette, independent of the site theme (always dark).
+   green/red are semantic: they may ONLY appear on live data deltas. */
+:root {
+  --lab-bg: #0A0B0D;
+  --lab-surface: #141619;
+  --lab-surface-2: #1C1F24;
+  --lab-text: #E8E9EB;
+  --lab-muted: #7A7F87;
+  --lab-faint: #4A4F57;
+  --lab-line: rgba(255, 255, 255, 0.08);
+  --lab-up: #00E68A;
+  --lab-down: #FF4D4D;
+  --lab-amber: #FFB020;
+}
+
+/* Expose tokens to Tailwind v4 as utilities (bg-base, text-muted,
+   border-hairline, text-lab-up, …). `inline` keeps them referencing the live
+   CSS variables so utilities respond to the theme switch. */
+@theme inline {
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-surface-2: var(--bg-surface-2);
+  --color-primary: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-hairline: var(--hairline);
+  --color-strong: var(--strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-nav: var(--nav-bg);
+
+  --color-lab-bg: var(--lab-bg);
+  --color-lab-surface: var(--lab-surface);
+  --color-lab-surface-2: var(--lab-surface-2);
+  --color-lab-text: var(--lab-text);
+  --color-lab-muted: var(--lab-muted);
+  --color-lab-faint: var(--lab-faint);
+  --color-lab-line: var(--lab-line);
+  --color-lab-up: var(--lab-up);
+  --color-lab-down: var(--lab-down);
+  --color-lab-amber: var(--lab-amber);
+
+  --font-sans: var(--font-inter-tight), system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-inter-tight), system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  /* Tabular figures for all live/data numbers so digits don't jitter. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Shared keyframe — the pulsing "live" dot used across hero, lab, nav. */
+@keyframes ud-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* Baseline scroll-reveal (upgraded to GSAP in Phase B). Honors reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
