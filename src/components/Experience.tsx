@@ -93,11 +93,8 @@ export default function Experience({
                 {role.current && (
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute top-0 end-0 w-[70px]"
-                    style={{
-                      height: `${BAR_HEIGHT}px`,
-                      background: "linear-gradient(90deg,transparent,var(--bg-surface))",
-                    }}
+                    className="timeline-fade pointer-events-none absolute top-0 end-0 w-[70px]"
+                    style={{ height: `${BAR_HEIGHT}px` }}
                   />
                 )}
               </div>
@@ -112,10 +109,16 @@ export default function Experience({
             return (
               <span
                 key={year}
-                className="absolute text-[11.5px] text-faint"
+                className="absolute whitespace-nowrap text-[11.5px] text-faint"
                 style={{ insetInlineStart: `${pct(year)}%` }}
               >
-                {isLast ? `${year} →` : year}
+                {isLast ? (
+                  <>
+                    {year} <span className="tl-arrow">→</span>
+                  </>
+                ) : (
+                  year
+                )}
               </span>
             );
           })}

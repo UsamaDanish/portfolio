@@ -27,7 +27,7 @@ export default function Nav({ nav }: { nav: NavContent }) {
           ))}
         </div>
 
-        <LangSwitcher label={nav.languageLabel} comingSoon={nav.localeComingSoon} />
+        <LangSwitcher label={nav.languageLabel} />
         <ThemeToggle toLight={nav.themeToLight} toDark={nav.themeToDark} />
       </div>
     </nav>

@@ -56,12 +56,7 @@ export default function Hero({ hero }: { hero: HeroContent }) {
         className="mx-auto mt-[clamp(28px,4vh,44px)] flex max-w-[1160px] items-center gap-3 px-[clamp(20px,5vw,48px)] text-[12px] text-faint"
       >
         <span>{hero.scrollPre}</span>
-        <span
-          className="h-px max-w-[120px] flex-1"
-          style={{
-            background: "linear-gradient(90deg,var(--strong),transparent)",
-          }}
-        />
+        <span className="scroll-line h-px max-w-[120px] flex-1" />
         <span>{hero.scrollPost}</span>
       </div>
     </header>

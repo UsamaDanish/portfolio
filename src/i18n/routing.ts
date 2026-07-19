@@ -7,10 +7,10 @@ import { defineRouting } from "next-intl/routing";
  * placeholders until they are enabled here.
  */
 export const routing = defineRouting({
-  locales: ["en"],
+  locales: ["en", "de", "ar"],
   defaultLocale: "en",
   // "always" keeps a locale prefix on every path (/en/…), which makes hreflang
-  // and the RTL/LTR split unambiguous once DE/AR ship.
+  // and the RTL/LTR split unambiguous. Arabic ("ar") renders dir="rtl".
   localePrefix: "always",
 });
 

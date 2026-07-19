@@ -321,8 +321,8 @@ function LabToggle({
         style={{ background: on ? "var(--lab-down)" : "rgba(255,255,255,.14)" }}
       >
         <span
-          className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-[left] duration-200 ease-[cubic-bezier(.2,.7,.2,1)]"
-          style={{ left: on ? "18px" : "2px" }}
+          className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-[inset-inline-start] duration-200 ease-[cubic-bezier(.2,.7,.2,1)]"
+          style={{ insetInlineStart: on ? "18px" : "2px" }}
         />
       </span>
       <span className="flex flex-col leading-[1.25]">

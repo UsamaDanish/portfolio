@@ -1,23 +1,19 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
 
-// The full set is shown from Phase A; DE/AR are disabled placeholders until
-// they are enabled in routing (Phase C), where they become locale-aware links.
 const LOCALES = [
   { id: "en", label: "EN" },
   { id: "de", label: "DE" },
   { id: "ar", label: "AR" },
-];
+] as const;
 
-export default function LangSwitcher({
-  label,
-  comingSoon,
-}: {
-  label: string;
-  comingSoon: string;
-}) {
+/** Language switcher — links to the current page in each locale. next-intl
+ *  swaps the locale prefix; the layout flips dir="rtl" for Arabic. */
+export default function LangSwitcher({ label }: { label: string }) {
   const active = useLocale();
+  const pathname = usePathname();
 
   return (
     <div
@@ -39,14 +35,15 @@ export default function LangSwitcher({
           );
         }
         return (
-          <span
+          <Link
             key={loc.id}
-            title={comingSoon}
-            aria-disabled="true"
-            className="cursor-not-allowed px-2 py-[3px] text-faint"
+            href={pathname}
+            locale={loc.id}
+            hrefLang={loc.id}
+            className="rounded-[5px] px-2 py-[3px] text-muted no-underline transition-colors hover:text-primary hover:no-underline"
           >
             {loc.label}
-          </span>
+          </Link>
         );
       })}
     </div>

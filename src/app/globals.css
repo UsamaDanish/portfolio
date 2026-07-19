@@ -139,6 +139,29 @@
   }
 }
 
+/* RTL (Arabic): mirror the few direction-bearing decorations that logical
+   properties can't flip on their own — the draw origin, edge-fade gradient
+   directions, and the timeline's trailing arrow. */
+[dir="rtl"] [data-draw] {
+  transform-origin: right center;
+}
+.timeline-fade {
+  background: linear-gradient(90deg, transparent, var(--bg-surface));
+}
+[dir="rtl"] .timeline-fade {
+  background: linear-gradient(90deg, var(--bg-surface), transparent);
+}
+.scroll-line {
+  background: linear-gradient(90deg, var(--strong), transparent);
+}
+[dir="rtl"] .scroll-line {
+  background: linear-gradient(90deg, transparent, var(--strong));
+}
+[dir="rtl"] .tl-arrow {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
 /* Lenis smooth scroll (Phase B) — required styles per the library. */
 html.lenis,
 html.lenis body {
