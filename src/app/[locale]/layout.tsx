@@ -5,6 +5,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { getDictionary } from "@/content";
+import { SITE_URL, OG_LOCALE } from "@/lib/site";
 import "../globals.css";
 
 // Single typeface across the whole design — display, body, labels, and data.
@@ -30,9 +31,54 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const { meta } = getDictionary(locale);
+
+  // hreflang alternates — one entry per locale, plus x-default.
+  const languages: Record<string, string> = Object.fromEntries(
+    routing.locales.map((l) => [l, `/${l}`]),
+  );
+  languages["x-default"] = `/${routing.defaultLocale}`;
+
   return {
+    metadataBase: new URL(SITE_URL),
     title: meta.title,
     description: meta.description,
+    authors: [{ name: "Usama Danish" }],
+    creator: "Usama Danish",
+    keywords: [
+      "Usama Danish",
+      "Full-Stack Engineer",
+      "Frontend Engineer",
+      "React",
+      "Next.js",
+      "TypeScript",
+      "Node.js",
+      "NestJS",
+      "Berlin",
+    ],
+    alternates: {
+      canonical: `/${locale}`,
+      languages,
+    },
+    openGraph: {
+      type: "website",
+      title: meta.title,
+      description: meta.description,
+      url: `/${locale}`,
+      siteName: "Usama Danish",
+      locale: OG_LOCALE[locale] ?? "en_US",
+      alternateLocale: routing.locales
+        .filter((l) => l !== locale)
+        .map((l) => OG_LOCALE[l] ?? l),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
   };
 }
 

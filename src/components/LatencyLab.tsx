@@ -1,46 +1,60 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { LabContent, LabToggleId } from "@/content/types";
-import { makeInstruments } from "@/lib/lab-data";
+import { makeInstruments, INSTRUMENT_COUNT } from "@/lib/lab-data";
 
-interface RowRefs {
-  lastEl: HTMLElement;
-  chgEl: HTMLElement;
-  open: number;
-  cur: number;
-}
+const ROW_H = 34; // px — fixed so virtualization math is exact
+const VIEWPORT_H = 440;
+const OVERSCAN = 8;
+const VISIBLE = Math.ceil(VIEWPORT_H / ROW_H) + OVERSCAN * 2;
+const CHANGES_PER_TICK = 160; // instruments that move each update
+const GRID_COLS =
+  "grid-cols-[64px_1fr_96px_92px] max-[820px]:grid-cols-[64px_96px_92px]";
 
 /**
- * The Latency Lab — always dark, theme-independent. A seeded random-walk over
- * ~50 fictional instruments drives live prices; the three toggles change a
- * MOCKED FPS target (Phase A) that Phase D replaces with genuinely-toggleable
- * rendering. IO-gated; naïve mode auto-disarms after 15s. Prices/meters are
- * written straight to the DOM so the RAF loop never re-renders React.
+ * The Latency Lab — always dark, theme-independent. Genuinely toggleable:
+ *
+ *  - Virtualization OFF renders all 11,000 rows; ON renders only a scroll window.
+ *  - Memoization OFF re-renders every visible row each tick; ON (React.memo)
+ *    skips rows whose price didn't change.
+ *  - Naïve rendering ON forces a synchronous re-render (flushSync) every frame;
+ *    OFF batches price updates on a throttle.
+ *
+ * FPS/Dropped are measured from real requestAnimationFrame timing, so the
+ * stutter is real. IO-gated; naïve mode auto-disarms after 15s. Prices live in
+ * an immutable Float64Array in state; `open` is the constant base price.
  */
 export default function LatencyLab({ lab }: { lab: LabContent }) {
-  const instruments = useMemo(() => makeInstruments(), []);
+  const instruments = useMemo(() => makeInstruments(INSTRUMENT_COUNT), []);
 
   const [naive, setNaive] = useState(false);
   const [noVirtual, setNoVirtual] = useState(false);
   const [noMemo, setNoMemo] = useState(false);
   const [naiveLeft, setNaiveLeft] = useState(15);
+  const [scrollTop, setScrollTop] = useState(0);
 
-  // Mirror toggle state into refs so the RAF loop reads the latest values.
+  const [prices, setPrices] = useState<Float64Array>(() => {
+    const p = new Float64Array(instruments.length);
+    for (let i = 0; i < instruments.length; i++) p[i] = instruments[i].base;
+    return p;
+  });
+
+  // Meters — displayed from state (updated ~4×/s), measured every frame in refs.
+  const [fps, setFps] = useState(60);
+  const [dropped, setDropped] = useState(0);
+
   const naiveRef = useRef(false);
-  const noVirtualRef = useRef(false);
-  const noMemoRef = useRef(false);
   useEffect(() => {
     naiveRef.current = naive;
-    noVirtualRef.current = noVirtual;
-    noMemoRef.current = noMemo;
-  }, [naive, noVirtual, noMemo]);
+  }, [naive]);
 
   const sectionRef = useRef<HTMLElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const fpsElRef = useRef<HTMLDivElement>(null);
-  const droppedElRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const naiveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fpsSmoothRef = useRef(60);
+  const droppedRef = useRef(0);
 
   // ---- naïve mode: 15s auto-disarm countdown ----
   function toggleNaive() {
@@ -70,83 +84,56 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
     });
   }
 
+  function onToggle(id: LabToggleId) {
+    if (id === "naive") toggleNaive();
+    else if (id === "noVirtual") setNoVirtual((v) => !v);
+    else setNoMemo((v) => !v);
+  }
+
   useEffect(() => {
     return () => {
       if (naiveTimerRef.current) clearInterval(naiveTimerRef.current);
     };
   }, []);
 
-  // ---- live price walk + FPS meter (RAF, IO-gated) ----
+  // ---- RAF loop: measure real FPS, walk prices, drive re-renders (IO-gated) ----
   useEffect(() => {
-    const grid = gridRef.current;
     const section = sectionRef.current;
-    if (!grid) return;
-
-    const rows: RowRefs[] = [];
-    grid.querySelectorAll<HTMLElement>("[data-row]").forEach((el) => {
-      const base = parseFloat(el.dataset.base || "0");
-      const lastEl = el.querySelector<HTMLElement>("[data-last]");
-      const chgEl = el.querySelector<HTMLElement>("[data-chg]");
-      if (lastEl && chgEl) rows.push({ lastEl, chgEl, open: base, cur: base });
-    });
-
     let raf = 0;
-    let fpsDisp = 60;
-    let dropped = 0;
-    let lastFrame = 0;
+    let last = 0;
+    let fpsSmooth = 60;
+    let droppedCount = 0;
     let priceAcc = 0;
 
+    // Immutable price walk: copy, move a subset, return the new array.
+    const walk = (prev: Float64Array) => {
+      const next = prev.slice();
+      const n = next.length;
+      for (let k = 0; k < CHANGES_PER_TICK; k++) {
+        const idx = (Math.random() * n) | 0;
+        const drift = (Math.random() - 0.5) * (next[idx] * 0.004 + 0.02);
+        next[idx] = Math.max(0.5, next[idx] + drift);
+      }
+      return next;
+    };
+
     const tick = (now: number) => {
-      const dt = now - (lastFrame || now);
-      lastFrame = now;
+      const dt = last ? now - last : 16.7;
+      last = now;
 
-      // Price random-walk — throttled; naïve mode updates in slower bursts.
+      // Real FPS from frame delta; a slow render delays the next frame → low fps.
+      const inst = 1000 / Math.max(dt, 0.001);
+      fpsSmooth += (inst - fpsSmooth) * 0.15;
+      if (dt > 20) droppedCount += 1; // slower than ~50fps → a dropped frame
+      fpsSmoothRef.current = fpsSmooth;
+      droppedRef.current = droppedCount;
+
       priceAcc += dt;
-      const stride = naiveRef.current ? 90 : 55;
-      if (priceAcc >= stride) {
+      const naiveOn = naiveRef.current;
+      if (naiveOn || priceAcc >= 50) {
         priceAcc = 0;
-        for (const r of rows) {
-          const drift = (Math.random() - 0.5) * (r.cur * 0.004 + 0.02);
-          r.cur = Math.max(0.5, r.cur + drift);
-          const pct = ((r.cur - r.open) / r.open) * 100;
-          r.lastEl.textContent = r.cur.toFixed(2);
-          r.chgEl.textContent = (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
-          r.chgEl.style.color =
-            pct >= 0.001
-              ? "var(--lab-up)"
-              : pct <= -0.001
-                ? "var(--lab-down)"
-                : "var(--lab-muted)";
-        }
-      }
-
-      // FPS meter — mocked target reflecting which optimizations are disabled.
-      let target = 60;
-      if (naiveRef.current) {
-        target = 11 + Math.random() * 4;
-      } else {
-        if (noVirtualRef.current) target -= 22;
-        if (noMemoRef.current) target -= 9;
-      }
-      const jitter = naiveRef.current
-        ? (Math.random() - 0.5) * 6
-        : (Math.random() - 0.5) * 1.4;
-      fpsDisp += (target - fpsDisp) * 0.12 + jitter;
-      fpsDisp = Math.max(6, Math.min(61, fpsDisp));
-      const shown = Math.round(fpsDisp);
-      if (fpsElRef.current) {
-        fpsElRef.current.textContent = String(shown);
-        fpsElRef.current.style.color =
-          shown < 30
-            ? "var(--lab-down)"
-            : shown < 52
-              ? "var(--lab-amber)"
-              : "var(--lab-text)";
-      }
-      if (fpsDisp < 55) {
-        dropped += naiveRef.current ? 2 : 1;
-        if (droppedElRef.current)
-          droppedElRef.current.textContent = dropped.toLocaleString();
+        if (naiveOn) flushSync(() => setPrices(walk));
+        else setPrices(walk);
       }
 
       raf = requestAnimationFrame(tick);
@@ -154,7 +141,7 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
 
     const start = () => {
       if (raf) return;
-      lastFrame = performance.now();
+      last = 0;
       raf = requestAnimationFrame(tick);
     };
     const stop = () => {
@@ -167,8 +154,7 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
     let io: IntersectionObserver | null = null;
     if (section && "IntersectionObserver" in window) {
       io = new IntersectionObserver(
-        (entries) =>
-          entries.forEach((e) => (e.isIntersecting ? start() : stop())),
+        (entries) => entries.forEach((e) => (e.isIntersecting ? start() : stop())),
         { threshold: 0.12 },
       );
       io.observe(section);
@@ -176,11 +162,41 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
       start();
     }
 
+    // Copy measured values into display state a few times a second.
+    const meterTimer = setInterval(() => {
+      setFps(Math.round(Math.min(60, Math.max(1, fpsSmoothRef.current))));
+      setDropped(droppedRef.current);
+    }, 250);
+
     return () => {
       stop();
       io?.disconnect();
+      clearInterval(meterTimer);
     };
   }, []);
+
+  // ---- virtualization window ----
+  const total = instruments.length;
+  const start = noVirtual
+    ? 0
+    : Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
+  const end = noVirtual ? total : Math.min(total, start + VISIBLE);
+
+  const rows = [];
+  for (let i = start; i < end; i++) {
+    const ins = instruments[i];
+    const props = { sym: ins.sym, name: ins.name, price: prices[i], open: ins.base };
+    rows.push(
+      noMemo ? (
+        <LabRow key={ins.sym} {...props} />
+      ) : (
+        <LabRowMemo key={ins.sym} {...props} />
+      ),
+    );
+  }
+
+  const fpsColor =
+    fps < 30 ? "var(--lab-down)" : fps < 52 ? "var(--lab-amber)" : "var(--lab-text)";
 
   return (
     <section
@@ -233,8 +249,8 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
             </div>
 
             <div className="mt-[2px] grid grid-cols-2 gap-3">
-              <Meter label={lab.meterFps} valueRef={fpsElRef} initial="60" />
-              <Meter label={lab.meterDropped} valueRef={droppedElRef} initial="0" />
+              <Meter label={lab.meterFps} value={String(fps)} color={fpsColor} />
+              <Meter label={lab.meterDropped} value={dropped.toLocaleString()} />
             </div>
 
             {naive && (
@@ -247,36 +263,30 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
 
           {/* Right column: the grid */}
           <div className="min-w-0 flex-1 overflow-hidden rounded-[14px] border border-lab-line bg-lab-surface">
-            <div className="grid grid-cols-[64px_1fr_96px_92px] gap-2 border-b border-lab-line px-[18px] py-3 text-[11px] uppercase tracking-[0.06em] text-lab-muted max-[820px]:grid-cols-[64px_96px_92px]">
+            <div
+              className={`grid ${GRID_COLS} gap-2 border-b border-lab-line px-[18px] py-3 text-[11px] uppercase tracking-[0.06em] text-lab-muted`}
+            >
               <span>{lab.colSym}</span>
               <span className="max-[820px]:hidden">{lab.colInstrument}</span>
               <span className="text-end">{lab.colLast}</span>
               <span className="text-end">{lab.colChg}</span>
             </div>
             <div
-              ref={gridRef}
+              ref={scrollRef}
               data-lenis-prevent
-              className="max-h-[440px] overflow-y-auto"
+              onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+              className="relative overflow-y-auto"
+              style={{ maxHeight: VIEWPORT_H }}
             >
-              {instruments.map((ins) => (
-                <div
-                  key={ins.sym}
-                  data-row
-                  data-base={ins.base}
-                  className="grid grid-cols-[64px_1fr_96px_92px] items-center gap-2 border-b border-white/[0.04] px-[18px] py-[9px] text-[13.5px] max-[820px]:grid-cols-[64px_96px_92px]"
-                >
-                  <span className="font-semibold text-lab-text">{ins.sym}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] text-lab-muted max-[820px]:hidden">
-                    {ins.name}
-                  </span>
-                  <span data-last className="tnum text-end text-lab-text">
-                    {ins.base}
-                  </span>
-                  <span data-chg className="tnum text-end text-lab-muted">
-                    0.00%
-                  </span>
+              {noVirtual ? (
+                <div>{rows}</div>
+              ) : (
+                <div style={{ height: total * ROW_H, position: "relative" }}>
+                  <div style={{ transform: `translateY(${start * ROW_H}px)` }}>
+                    {rows}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -285,15 +295,44 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
       </div>
     </section>
   );
-
-  function onToggle(id: LabToggleId) {
-    if (id === "naive") toggleNaive();
-    else if (id === "noVirtual") setNoVirtual((v) => !v);
-    else setNoMemo((v) => !v);
-  }
 }
 
-/** Custom switch control. Turns red when ON (the harmful state is engaged). */
+// ---- Row ----
+interface RowProps {
+  sym: string;
+  name: string;
+  price: number;
+  open: number;
+}
+
+function LabRow({ sym, name, price, open }: RowProps) {
+  const pct = ((price - open) / open) * 100;
+  const color =
+    pct >= 0.001
+      ? "var(--lab-up)"
+      : pct <= -0.001
+        ? "var(--lab-down)"
+        : "var(--lab-muted)";
+  return (
+    <div
+      className={`grid ${GRID_COLS} items-center gap-2 border-b border-white/[0.04] px-[18px] text-[13.5px]`}
+      style={{ height: ROW_H }}
+    >
+      <span className="font-semibold text-lab-text">{sym}</span>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] text-lab-muted max-[820px]:hidden">
+        {name}
+      </span>
+      <span className="tnum text-end text-lab-text">{price.toFixed(2)}</span>
+      <span className="tnum text-end" style={{ color }}>
+        {(pct >= 0 ? "+" : "") + pct.toFixed(2)}%
+      </span>
+    </div>
+  );
+}
+
+// Memoized cell: skips re-render when its price (and identity) is unchanged.
+const LabRowMemo = memo(LabRow);
+
 function LabToggle({
   label,
   on,
@@ -335,12 +374,12 @@ function LabToggle({
 
 function Meter({
   label,
-  valueRef,
-  initial,
+  value,
+  color,
 }: {
   label: string;
-  valueRef: React.RefObject<HTMLDivElement | null>;
-  initial: string;
+  value: string;
+  color?: string;
 }) {
   return (
     <div className="rounded-[12px] border border-lab-line bg-lab-surface p-4">
@@ -348,10 +387,10 @@ function Meter({
         {label}
       </div>
       <div
-        ref={valueRef}
-        className="tnum mt-1 text-[34px] font-semibold leading-[1.1] text-lab-text"
+        className="tnum mt-1 text-[34px] font-semibold leading-[1.1]"
+        style={{ color: color ?? "var(--lab-text)" }}
       >
-        {initial}
+        {value}
       </div>
     </div>
   );
