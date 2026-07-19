@@ -36,7 +36,7 @@ export default function CaseStudies({ studies }: { studies: CaseStudy[] }) {
             {study.steps.map((step, i) => (
               <div
                 key={step.label}
-                className="rounded-[14px] border border-hairline bg-surface p-[22px] pb-6"
+                className="rounded-[14px] border border-hairline bg-surface p-[22px] pb-6 transition-[transform,border-color] duration-300 ease-[cubic-bezier(.2,.7,.2,1)] hover:-translate-y-[3px] hover:border-strong motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 <div className="mb-3 text-[11px] uppercase tracking-[0.08em] text-accent">
                   {i + 1} · {step.label}

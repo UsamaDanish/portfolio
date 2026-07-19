@@ -253,7 +253,11 @@ export default function LatencyLab({ lab }: { lab: LabContent }) {
               <span className="text-end">{lab.colLast}</span>
               <span className="text-end">{lab.colChg}</span>
             </div>
-            <div ref={gridRef} className="max-h-[440px] overflow-y-auto">
+            <div
+              ref={gridRef}
+              data-lenis-prevent
+              className="max-h-[440px] overflow-y-auto"
+            >
               {instruments.map((ins) => (
                 <div
                   key={ins.sym}

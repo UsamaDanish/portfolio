@@ -63,9 +63,13 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body>
+        {/* Pre-paint theme init — must run before the body paints (blocking,
+            first in body) to avoid a flash. React 19 logs a dev-only notice
+            that inline scripts don't run on client renders; that's expected —
+            this only needs to run once, on the initial server-rendered load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <noscript>
-          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}[data-draw]{transform:none !important}`}</style>
         </noscript>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

@@ -8,7 +8,7 @@ import Projects from "@/components/Projects";
 import Craft from "@/components/Craft";
 import About from "@/components/About";
 import Footer from "@/components/Footer";
-import RevealController from "@/components/RevealController";
+import Motion from "@/components/Motion";
 
 export default async function Home({
   params,
@@ -34,7 +34,7 @@ export default async function Home({
       </main>
 
       <Footer footer={dict.footer} />
-      <RevealController />
+      <Motion />
     </div>
   );
 }

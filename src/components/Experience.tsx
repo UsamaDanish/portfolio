@@ -63,8 +63,9 @@ export default function Experience({
                 className="absolute inset-x-0"
                 style={{ insetBlockStart: `${i * LANE_HEIGHT}px`, height: `${BAR_HEIGHT}px` }}
               >
-                {/* Colored duration bar */}
+                {/* Colored duration bar — "draws" in on scroll (Phase B) */}
                 <div
+                  data-draw
                   className="absolute top-0 rounded-lg"
                   style={{
                     insetInlineStart: `${left}%`,

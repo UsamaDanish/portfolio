@@ -27,7 +27,7 @@ export default function Projects({ projects }: { projects: ProjectsContent }) {
         {projects.items.map((project) => (
           <article
             key={project.id}
-            className="flex flex-col rounded-[16px] border border-hairline bg-surface p-[clamp(20px,2.4vw,26px)]"
+            className="flex flex-col rounded-[16px] border border-hairline bg-surface p-[clamp(20px,2.4vw,26px)] transition-[transform,border-color,box-shadow] duration-300 ease-[cubic-bezier(.2,.7,.2,1)] hover:-translate-y-1 hover:border-strong hover:shadow-[0_18px_50px_-16px_rgba(0,0,0,0.22)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-[11px] uppercase tracking-[0.08em] text-accent">

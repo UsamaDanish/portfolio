@@ -83,14 +83,9 @@
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Anchor scrolling clears the 64px sticky nav (Lenis takes over in Phase B). */
-    scroll-behavior: smooth;
+    /* Fallback anchor offset when Lenis is inactive (reduced-motion / no-JS).
+       When Lenis is active it scrolls anchors itself with a nav offset. */
     scroll-padding-top: 80px;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
   }
   body {
     background: var(--bg-base);
@@ -120,26 +115,44 @@
   50% { opacity: 1; }
 }
 
-/* Baseline scroll-reveal (upgraded to GSAP in Phase B). Elements start hidden
-   and get `.is-visible` from the RevealController when scrolled into view. */
+/* Scroll-reveal & timeline-draw initial states. GSAP ScrollTrigger animates
+   these to their final state on scroll (Phase B). Pre-JS the elements sit in
+   the initial state; no-JS and reduced-motion force the final state so content
+   is never trapped behind an un-fired animation. */
 [data-reveal] {
   opacity: 0;
   transform: translateY(22px);
-  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
-    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
   will-change: opacity, transform;
 }
-[data-reveal].is-visible {
-  opacity: 1;
-  transform: none;
+[data-draw] {
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
-
-/* Never trap content behind an un-fired reveal: no-JS and reduced-motion both
-   render everything visible immediately. */
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
-    transition: none !important;
   }
+  [data-draw] {
+    transform: none !important;
+  }
+}
+
+/* Lenis smooth scroll (Phase B) — required styles per the library. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
