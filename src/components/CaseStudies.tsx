@@ -1,5 +1,4 @@
 import type { CaseStudy } from "@/content/types";
-import Timeline from "./Timeline";
 import RoleSwitcher from "./RoleSwitcher";
 
 /** Array-driven case studies. Each renders the full narrative: intro →
@@ -51,8 +50,6 @@ export default function CaseStudies({ studies }: { studies: CaseStudy[] }) {
               </div>
             ))}
           </div>
-
-          <Timeline timeline={study.timeline} />
 
           <RoleSwitcher data={study.roleSwitcher} />
 

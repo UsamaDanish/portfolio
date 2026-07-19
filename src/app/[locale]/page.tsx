@@ -3,6 +3,7 @@ import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import LatencyLab from "@/components/LatencyLab";
 import CaseStudies from "@/components/CaseStudies";
+import Experience from "@/components/Experience";
 import Projects from "@/components/Projects";
 import Craft from "@/components/Craft";
 import About from "@/components/About";
@@ -26,6 +27,7 @@ export default async function Home({
         <Hero hero={dict.hero} />
         <LatencyLab lab={dict.lab} />
         <CaseStudies studies={dict.caseStudies} />
+        <Experience experience={dict.experience} />
         <Projects projects={dict.projects} />
         <Craft craft={dict.craft} />
         <About about={dict.about} />

@@ -80,22 +80,6 @@ export interface CaseStep {
   body: string;
 }
 
-export interface TimelineBar {
-  label: string;
-  startPct: number;
-  widthPct: number;
-  variant: "muted" | "accent";
-  /** Runs off the right edge with an edge-fade (the ongoing bar). */
-  runsOff?: boolean;
-}
-
-export interface CaseTimeline {
-  heading: string;
-  bars: TimelineBar[];
-  years: string[];
-  caption: string;
-}
-
 export interface RolePanel {
   title: string;
   meta: string;
@@ -122,9 +106,35 @@ export interface CaseStudy {
   title: string;
   intro: string;
   steps: CaseStep[];
-  timeline: CaseTimeline;
   roleSwitcher: RoleSwitcher;
   stat: CaseStat;
+}
+
+/** One role on the career timeline. Positioned on a shared year axis. */
+export interface CareerRole {
+  company: string;
+  role: string;
+  period: string;
+  /** Tech stack for this role, shown trailing the company label. */
+  stack: string[];
+  /** Decimal-year start (e.g. Feb 2018 → 2018.1). */
+  start: number;
+  /** Decimal-year end, or null for the current role (runs off the axis). */
+  end: number | null;
+  variant: "accent" | "muted";
+  current?: boolean;
+}
+
+export interface ExperienceContent {
+  kicker: string;
+  title: string;
+  intro: string;
+  axisStart: number;
+  axisEnd: number;
+  /** Whole-year ticks drawn on the axis (last one gets a "→"). */
+  yearMarks: number[];
+  roles: CareerRole[];
+  caption: string;
 }
 
 export interface Project {
@@ -185,6 +195,7 @@ export interface Dictionary {
   hero: HeroContent;
   lab: LabContent;
   caseStudies: CaseStudy[];
+  experience: ExperienceContent;
   projects: ProjectsContent;
   craft: CraftContent;
   about: AboutContent;

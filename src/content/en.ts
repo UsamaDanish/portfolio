@@ -2,9 +2,9 @@ import type { Dictionary } from "./types";
 
 const en: Dictionary = {
   meta: {
-    title: "Usama Danish — Senior Frontend Engineer",
+    title: "Usama Danish — Senior Full-Stack Engineer",
     description:
-      "Senior Frontend Engineer building high-performance, real-time product interfaces. Berlin · 8+ years. React, Next.js, TypeScript.",
+      "Senior full-stack engineer building high-performance, real-time products — React, Next.js & TypeScript on the frontend, Node.js & NestJS on the backend. Berlin · 8+ years.",
   },
 
   nav: {
@@ -12,6 +12,7 @@ const en: Dictionary = {
     links: [
       { label: "Latency Lab", href: "#lab" },
       { label: "Case study", href: "#case" },
+      { label: "Experience", href: "#experience" },
       { label: "Projects", href: "#projects" },
       { label: "About", href: "#about" },
     ],
@@ -22,11 +23,11 @@ const en: Dictionary = {
   },
 
   hero: {
-    kicker: "Senior Frontend Engineer · Berlin · 8+ years",
+    kicker: "Senior Full-Stack Engineer · Berlin · 8+ years",
     headline:
-      "I build product interfaces that stay fast when the data doesn't slow down.",
+      "I build products that stay fast when the data doesn't slow down.",
     subheadline:
-      "Eight years of demanding, real-time product UIs where being wrong is expensive. The hardest thing I've built is behind a bank login — so instead of a screenshot, here's a live one running in your browser.",
+      "Eight years of demanding, real-time products — frontend to backend — where being wrong is expensive. The hardest thing I've built is behind a bank login, so instead of a screenshot, here's a live one running in your browser.",
     chips: ["Wealth & trading", "Health", "Marketplaces", "Esports data"],
     liveLabel: "live",
     fpsUnit: "fps",
@@ -102,26 +103,6 @@ const en: Dictionary = {
           body: "A new jurisdiction is a new capability map — no component changes. Owned end to end.",
         },
       ],
-      timeline: {
-        heading: "Framework timeline",
-        bars: [
-          {
-            label: "ENBD X · Angular",
-            startPct: 2,
-            widthPct: 40,
-            variant: "muted",
-          },
-          {
-            label: "Wealth Pro · React · TypeScript · Next.js",
-            startPct: 44,
-            widthPct: 60,
-            variant: "accent",
-            runsOff: true,
-          },
-        ],
-        years: ["2023", "2024", "2025", "2026 →"],
-        caption: "Two years React, current and ongoing. One year Angular before it.",
-      },
       roleSwitcher: {
         title: "Capability-based rendering",
         body: "Components declare what they need, not who they're for. Roles resolve to capability sets — a new jurisdiction is a new capability map, zero component changes. Flip a role:",
@@ -182,6 +163,66 @@ const en: Dictionary = {
     },
   ],
 
+  experience: {
+    kicker: "Experience",
+    title: "Eight years, full-stack — from early .NET to real-time trading platforms.",
+    intro:
+      "Frontend and backend, across five companies and products for Swedish, international and UAE clients. Node.js and NestJS through the middle years; React and Next.js throughout.",
+    axisStart: 2018,
+    axisEnd: 2026.5,
+    yearMarks: [2018, 2020, 2022, 2024, 2026],
+    roles: [
+      {
+        company: "Digicare",
+        role: "Associate Software Developer",
+        period: "Feb 2018 – Aug 2019",
+        stack: ["ASP.NET Core", "MVC"],
+        start: 2018.1,
+        end: 2019.65,
+        variant: "muted",
+      },
+      {
+        company: "SecureHops",
+        role: "MERN Stack Developer",
+        period: "Nov 2019 – Jan 2021",
+        stack: ["React", "Next.js", "NestJS", "Node", "MongoDB"],
+        start: 2019.83,
+        end: 2021.08,
+        variant: "muted",
+      },
+      {
+        company: "DPL",
+        role: "Software Engineer · Full-Stack",
+        period: "Feb 2021 – Feb 2023",
+        stack: ["Node.js", "NestJS", "MongoDB", "React"],
+        start: 2021.08,
+        end: 2023.08,
+        variant: "muted",
+      },
+      {
+        company: "NeeoPal",
+        role: "Software Engineer",
+        period: "Feb 2023 – Sep 2023",
+        stack: ["NestJS", "MongoDB", "AWS"],
+        start: 2023.08,
+        end: 2023.75,
+        variant: "muted",
+      },
+      {
+        company: "Emirates NBD",
+        role: "Senior Frontend Engineer",
+        period: "Oct 2023 – Present",
+        stack: ["React", "Next.js", "TypeScript"],
+        start: 2023.75,
+        end: null,
+        variant: "accent",
+        current: true,
+      },
+    ],
+    caption:
+      "React & Next.js on the frontend · Node.js & NestJS on the backend · eight years, full-stack.",
+  },
+
   projects: {
     kicker: "Selected work",
     title: "The same thread, across very different products.",
@@ -241,10 +282,10 @@ const en: Dictionary = {
 
   about: {
     kicker: "About",
-    lead: "Eight years building demanding product interfaces.",
-    body: "Trading and wealth platforms most recently at Emirates NBD — but also health (a fertility & mental-health app), consumer marketplaces, and esports data infrastructure for Swedish clients. The common thread is complex state, real-time data, and interfaces where being wrong is expensive.",
+    lead: "Eight years building demanding, real-time products — end to end.",
+    body: "Trading and wealth platforms most recently at Emirates NBD — but also health (a fertility & mental-health app), consumer marketplaces, and esports data infrastructure for Swedish clients. The common thread is complex state, real-time data, and products — frontend to backend — where being wrong is expensive.",
     blockquote:
-      "Two years React. One year Angular before it. Eight years of demanding frontend underneath. The framework was never the hard part.",
+      "React and Next on the frontend, Node and NestJS on the backend — eight years of demanding, full-stack product work. The framework was never the hard part.",
     portraitPlaceholder: "portrait — drop a 4:5 image",
     languagesHeading: "Languages",
     languages: [
